@@ -20,22 +20,22 @@ def record_video(camera_index, output_directory="video0"):
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    output_filename = os.path.join(output_directory, f"{mac_address}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.mp4")
-    out = cv2.VideoWriter(output_filename, fourcc, 20.0, (width, height))
-    out_is_open = True
+    out_is_open = False
 
     while(cap.isOpened()):
         ret, frame = cap.read()
         if ret == True:
             if frame.mean() > 50:
-                output_filename = os.path.join(output_directory, f"{mac_address}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.mp4")
-                out = cv2.VideoWriter(output_filename, fourcc, 20.0, (width, height))
-            elif out_is_open:
+                if not out_is_open:
+                    output_filename = os.path.join(output_directory, f"{mac_address}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.mp4")
+                    out = cv2.VideoWriter(output_filename, fourcc, 20.0, (width, height))
+                    out_is_open = True
+                out.write(frame)
+            elif frame.mean() < 50 and out_is_open:
                 out.release()
                 out_is_open = False
 
-            out.write(frame)
-            cv2.imshow('frame', frame)
+            cv2.imshow(output_directory, frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         else:
@@ -53,15 +53,15 @@ def main():
 
     # Create threads for each camera
     thread1 = threading.Thread(target=record_video, args=(camera1_index, "video0",))
-    thread2 = threading.Thread(target=record_video, args=(camera2_index, "video1", ))
+    # thread2 = threading.Thread(target=record_video, args=(camera2_index, "video1", ))
 
     # Start the threads
     thread1.start()
-    thread2.start()
+    # thread2.start()
 
     # Wait for both threads to finish
     thread1.join()
-    thread2.join()
+    # thread2.join()
 
 if __name__ == "__main__":
     main()
